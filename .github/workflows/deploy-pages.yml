@@ -1,0 +1,74 @@
+name: Deploy Website & Publish Live Link Release
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  build-and-deploy:
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Install dependencies
+        run: npm install --legacy-peer-deps
+
+      - name: Build Seema Sena Party website
+        env:
+          VITE_BASE_PATH: /${{ github.event.repository.name }}/
+        run: |
+          npm run build
+          cp dist/index.html dist/404.html
+
+      - name: Configure GitHub Pages
+        uses: actions/configure-pages@v5
+        with:
+          enablement: true
+
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: dist
+
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
+
+      - name: Publish live website link to GitHub Release
+        id: release
+        continue-on-error: true
+        env:
+          GH_TOKEN: ${{ github.token }}
+          LIVE_URL: ${{ steps.deployment.outputs.page_url }}
+        run: |
+          TAG="website-release-${{ github.run_number }}-${{ github.run_attempt }}"
+          gh release create "$TAG" \
+            --target "${{ github.sha }}" \
+            --title "Seema Sena Party Live Website (#${{ github.run_number }})" \
+            --notes "Direct Live Website Link: ${LIVE_URL}
+
+          Repository: ${{ github.repository }}
+          Build Run: #${{ github.run_number }} (Attempt ${{ github.run_attempt }})
+          Source Commit: ${{ github.sha }}" \
+            --latest
+          echo "Direct Website URL: ${LIVE_URL}" >> "$GITHUB_STEP_SUMMARY"

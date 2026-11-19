@@ -1,0 +1,6 @@
+{
+  "name": "Seema Sena Party",
+  "description": "Official civic portal of Seema Sena Party — Andhra Pradesh's people-first political movement founded by V Nagaraj on November 23, 2026. Membership registration, news updates, and event schedules.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
